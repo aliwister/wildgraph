@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     # Read File
     columns = ['idx', 'label', 'location.lat', 'location.long']
-    file_name = args.dataset + ".csv"
+    file_name = f"data/{args.dataset}.csv"
     df = pd.read_csv(file_name, usecols=columns)
     
     # K-Fold split
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     print("#####")
     runner = Runner(seq_len=seq_len, distance=args.split_distance, test_sample_size=TEST_SAMPLE_SIZE)
 
-    logging.basicConfig(filename=f"./w_last_day/{args.exp}/_{args.exp}_epochs={args.epochs}_{args.dataset}_{args.split_distance}_{args.desc}.log", level=logging.INFO)
+    logging.basicConfig(filename=f"./wild_experiments_log/{args.exp}/_{args.exp}_epochs={args.epochs}_{args.dataset}_{args.split_distance}_{args.desc}.log", level=logging.INFO)
     mean1_all, mean2_all, mean3_all, touched1_all, touched2_all, touched3_all, time_all, r_all, chi_all = 0, 0, 0, 0, 0, 0, 0, 0, 0
     r_full_all, chi_full_all = 0,0
     for rep in range(args.num_exps):
@@ -215,7 +215,7 @@ if __name__ == '__main__':
             elif (args.exp == "GAN"):
                 generated = gan.run_gan(df_train, args.epochs, seq_len)
             elif (args.exp == "WILDGEN"):
-                mat_data = scipy.io.loadmat(f"Traj_{args.dataset}_{k}.mat")
+                mat_data = scipy.io.loadmat(f"data/wildgen/Traj_{args.dataset}_{k}.mat")
                 data = np.reshape(mat_data[f"Traj_{args.dataset}_{k}"], (seq_len,2,1000))
                 data = data[:,:,rep*200:(rep+1)*200]
                 generated = wildgen.run_wildgen(df_train, data)
@@ -225,7 +225,7 @@ if __name__ == '__main__':
             min3, max3, mean3, touched3 = fde.update(test_array, generated)
             r, chi = corr.update(test_array, generated, likeness_clusters)
 
-            #np.save(f"./wild_experiments/{EXPERIMENT}/{EXPERIMENT}_EPOCHS={EPOCHS}_{rep}_k{k}_{FILE}.npy", generated)
+            #np.save(f"./wild_experiments_log/{EXPERIMENT}/{EXPERIMENT}_EPOCHS={EPOCHS}_{rep}_k{k}_{FILE}.npy", generated)
 
             logging.info(f"k: {k},########### Means:  mean_haus: {mean1}, mean_dtw {mean2} mean_fde {mean3} ({touched1}, {touched2}, {touched3}) corr={r},{chi}")
 
