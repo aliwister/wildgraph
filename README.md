@@ -6,7 +6,7 @@ This repository contains the official implementation of [WildGraph: Realistic Gr
 
 
 
-## Gettting Started
+## Getting Started
 
 1\. Clone this repository:
 ```
