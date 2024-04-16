@@ -19,6 +19,12 @@ import wildbm_gan as gan
 import wildbm_wildgen as wildgen
 import scipy
 
+ABLATE_UNIFORM_COARSE = False
+ABLATE_UNIFORM_FINE = False
+ABLATE_NO_PE = False
+ABLATE_BOW = False
+
+
 seed = torch.Generator().manual_seed(42)
 class RawDataset(Dataset):
     def __init__(self, df):
@@ -36,8 +42,13 @@ class Runner():
 
     def run_wildgraph(self, df_train, df_test, epochs):
         data = dataset.TrajDataset(df_train, len(train_index), seq_length=self.seq_len, distance=self.distance)
+        if ABLATE_UNIFORM_COARSE:
+            data = dataset.TrajDataset(df_train, len(train_index), seq_length=self.seq_len, distance=self.distance, ablate_is_fixed_zoom=True, fixed_zoom_value=2)
+        elif ABLATE_UNIFORM_FINE:
+            data = dataset.TrajDataset(df_train, len(train_index), seq_length=self.seq_len, distance=self.distance, ablate_is_fixed_zoom=True, fixed_zoom_value=8)
+
         tokenizer = data.tokenizer
-        logging.info(f"Network Density = {data.density}")
+        #logging.info(f"Network Density = {data.density}")
         real = df_test[['label', 'location.lat', 'location.long']].groupby('label')
         group_arrays = [group[['location.lat', 'location.long']].to_numpy() for _, group in real]
         real_array = np.array(group_arrays)
@@ -48,25 +59,36 @@ class Runner():
         train_loader = DataLoader(X_train, batch_size=16, num_workers=16)
         validation_loader = DataLoader(X_test, batch_size=8, num_workers=16)
 
-        embed_epochs = wildgraph.EMBED_EPOCHS
-        tokenizer = data.tokenizer
-        embedder = wildgraph.train_embed(data.edge_index, epochs=embed_epochs)
+        if not ABLATE_BOW:
+            embed_epochs = wildgraph.EMBED_EPOCHS
+            tokenizer = data.tokenizer
+            embedder = wildgraph.train_embed(data.edge_index, epochs=embed_epochs)
+
+            if ABLATE_NO_PE:
+                model = wildgraph.train_wildgraph(data, embedder, tokenizer, train_loader, validation_loader, epochs, file_name=file_name, seq_length=self.seq_len, pe = 0)
+            else:
+                model = wildgraph.train_wildgraph(data, embedder, tokenizer, train_loader, validation_loader, epochs, file_name=file_name, seq_length=self.seq_len)
+        else:
+            embed_dim = len(tokenizer.classes_)
+            def embed(x, embed_dim_func):
+                embeddings = []
+                for item in x:
+                    x_embed = -1 * torch.ones(embed_dim)
+                    if item >= 0:
+                        x_embed[item] = 4
+                    embeddings.append(x_embed)
+                return torch.stack(embeddings)
+            partial_embed = lambda x: embed(x, len(tokenizer.classes_))
+            model = wildgraph.train_wildgraph(data, partial_embed, tokenizer, train_loader, validation_loader, epochs, file_name=file_name, seq_length=self.seq_len, embed_dim=len(tokenizer.classes_))
         #embed_dim = len(tokenizer.classes_)
         #return
-        def embed(x):
-            embeddings = []
-            for item in x:
-                x_embed = -1 * torch.ones(1400)
-                if item >= 0:
-                    x_embed[item] = 4
-                embeddings.append(x_embed)
-            return torch.stack(embeddings)
 
 
-        model = wildgraph.train_wildgraph(data, embedder, tokenizer, train_loader, validation_loader, epochs, file_name=file_name, seq_length=self.seq_len)
+
+        #model = wildgraph.train_wildgraph(data, embedder, tokenizer, train_loader, validation_loader, epochs, file_name=file_name, seq_length=self.seq_len, )
         model.eval()
         z_samples, z_init = model.process()
-        generated = model.generate_traj(z_samples, z_init)
+        generated = model.generate_traj(z_samples, z_init, self.test_sample_size)
         return generated
 
     def run_trasnformer(self, df_train, df_test, epochs):
@@ -139,7 +161,18 @@ if __name__ == '__main__':
     parser.add_argument('--split_distance', type=float, default=.25) # maximum distance between 2 points in a given region (r)
     parser.add_argument('--num_exps', type=int, default=5)  # How many experiments to run
     parser.add_argument('--desc', type=str, default="full")  # An arbitrary name to describe the experiment
+    parser.add_argument('--ablate', type=str, default="not-ablate")  # An arbitrary name to describe the experiment
     args = parser.parse_args()
+
+    if (args.ablate == "uniform_coarse"):
+        ABLATE_UNIFORM_COARSE = True
+    elif (args.ablate == "uniform_fine"):
+        ABLATE_UNIFORM_FINE = True
+    elif (args.ablate == "no_pe"):
+        ABLATE_NO_PE = True
+    elif (args.ablate  == "bow"):
+        ABLATE_BOW = True
+
 
     # Read File
     columns = ['idx', 'label', 'location.lat', 'location.long']
@@ -178,7 +211,7 @@ if __name__ == '__main__':
     print("#####")
     runner = Runner(seq_len=seq_len, distance=args.split_distance, test_sample_size=TEST_SAMPLE_SIZE)
 
-    logging.basicConfig(filename=f"./wild_experiments_log/{args.exp}/_{args.exp}_epochs={args.epochs}_{args.dataset}_{args.split_distance}_{args.desc}.log", level=logging.INFO)
+    logging.basicConfig(filename=f"./wild_experiments_log/{args.exp}/_{args.exp}_epochs={args.epochs}_{args.dataset}_{args.split_distance}_{args.desc}_{args.ablate}_{args.num_exps}-exps.log", level=logging.INFO)
     mean1_all, mean2_all, mean3_all, touched1_all, touched2_all, touched3_all, time_all, r_all, chi_all = 0, 0, 0, 0, 0, 0, 0, 0, 0
     r_full_all, chi_full_all = 0,0
     for rep in range(args.num_exps):
@@ -219,13 +252,24 @@ if __name__ == '__main__':
                 data = np.reshape(mat_data[f"Traj_{args.dataset}_{k}"], (seq_len,2,1000))
                 data = data[:,:,rep*200:(rep+1)*200]
                 generated = wildgen.run_wildgen(df_train, data)
+            elif (args.exp == "LEVY"):
+                levy = pd.read_csv(f"./data/levy/levy-{args.dataset}-{k+1}.csv")
+                levy = levy[['idx', 'lat', 'lng']].groupby('idx')
+                gen_flat = [group[['lat', 'lng']].to_numpy() for _, group in levy]
+                all = np.array(gen_flat)
+                indexes = range(len(all))
+                random = np.random.choice(indexes, size=60, replace=False)
+                generated =  np.array([list(all[index]) for index in random])
 
             min1, max1, mean1, touched1 = hausdorff.update(test_array, generated)
             min2, max2, mean2, touched2 = dtw.update(test_array, generated)
             min3, max3, mean3, touched3 = fde.update(test_array, generated)
             r, chi = corr.update(test_array, generated, likeness_clusters)
+            
+            test_len = len(test_index)
+            touched1, touched2, touched3 = touched1/ test_len, touched2/test_len, touched3/test_len
 
-            #np.save(f"./wild_experiments_log/{EXPERIMENT}/{EXPERIMENT}_EPOCHS={EPOCHS}_{rep}_k{k}_{FILE}.npy", generated)
+            #np.save(f"./wild_experiments_log/{args.exp}/{args.exp}_EPOCHS={args.epochs}_{rep}_k{k}_{args.dataset}.npy", generated)
 
             logging.info(f"k: {k},########### Means:  mean_haus: {mean1}, mean_dtw {mean2} mean_fde {mean3} ({touched1}, {touched2}, {touched3}) corr={r},{chi}")
 

@@ -26,8 +26,11 @@ class TrajDataset(Dataset):
     def __getitem__(self, index):
         return self.x[index], self.y[index], self.pos[index]
     
-    def load_data(self, df, sample_size, seq_length, is_tokenize_special_chars, distance):
+    def load_data(self, df, sample_size, seq_length, is_tokenize_special_chars, distance, ablate_is_fixed_zoom = False, fixed_zoom_value = 2):
         init_resolution = 2
+        if ablate_is_fixed_zoom:
+            init_resolution = fixed_zoom_value
+        
         df['h3_address'] = df.apply(lambda row: h3.latlng_to_cell(row['location.lat'], row['location.long'], init_resolution), axis=1)
 
         def get_distance_split_targets(dfi, dist): 
@@ -49,9 +52,10 @@ class TrajDataset(Dataset):
             else:
                 return row['h3_address']
 
-        for zoom in range(3,8):
-            dup_list = get_distance_split_targets(df, distance)
-            df['h3_address'] = df.apply(lambda row: granulate(row, zoom, dup_list), axis=1)
+        if (not ablate_is_fixed_zoom):
+            for zoom in range(3,8):
+                dup_list = get_distance_split_targets(df, distance)
+                df['h3_address'] = df.apply(lambda row: granulate(row, zoom, dup_list), axis=1)
 
         self.density = len(df) / df['h3_address'].nunique()
         df = df.sort_values(by=['idx', 'label'])

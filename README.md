@@ -23,7 +23,7 @@ conda create --name wildgraph --file requirements.txt
 
 It is quite easy to train and test WildGraph or any of the benchmark methods reported:
 
-<code>python wild_run.py --dataset <geese|stork> --exp <WILDGRAPH|GAN|VAE|WILDGEN|TRANSFORMER> --epochs <epochs> --split_distance <r> --num_exps <number of experiments to average> --desc <a general description></code>
+<code>python wild_run.py --dataset <geese|stork> --exp <WILDGRAPH|GAN|VAE|WILDGEN|TRANSFORMER> --epochs <epochs> --split_distance <r> --num_exps <number of experiments to average> --desc <a general description></code> --ablate<uniform_coarse|uniform_fine|no_pe|bow>
 
 
 To train WildGraph:

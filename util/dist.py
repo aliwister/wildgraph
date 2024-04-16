@@ -64,6 +64,7 @@ class DTW():
         touched = np.zeros(len(real))
         for traj1 in generated:
             path = 100000
+            path_idx = -1
             skip = False
             for i, traj2 in enumerate(real):
                 #pdb.set_trace()
