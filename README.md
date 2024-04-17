@@ -1,9 +1,10 @@
 # WildGraph: Realistic Graph-based Trajectory Generation for Wildlife
 This repository contains the official implementation of [WildGraph: Realistic Graph-based Trajectory Generation for Wildlife]() submitted to KDD'24.
+## Train 
+![Model](assets/wildgraph-train.png)
 
-![Model](assets/wildgraph.png)
-
-
+## Generate
+![Model](assets/wildgraph-gen.png)
 
 
 ## Getting Started
@@ -28,14 +29,13 @@ It is quite easy to train and test WildGraph or any of the benchmark methods rep
 
 To train WildGraph:
 ```
-python wild_run.py --dataset geese --exp WILDGRAPH --epochs 100 --split_distance .25
+python wild_run.py --dataset geese --exp WILDGRAPH --epochs 90 --split_distance .25
 
 
 ```
-
 To train VAE:
 ```
-python wild_run.py --dataset geese --exp VAE --epochs 100 
+python wild_run.py --dataset geese --exp VAE --epochs 90 
 ```
 
 After training, a report will be saved in `wild_experiments_log/[EXP]` automatically.
@@ -46,7 +46,13 @@ After training, a report will be saved in `wild_experiments_log/[EXP]` automatic
 If you found this repository useful, please consider citing our work:
 
 ```
-@inproceedings{
+@misc{allawati2024wildgraph,
+      title={WildGraph: Realistic Graph-based Trajectory Generation for Wildlife}, 
+      author={Ali Al-Lawati and Elsayed Eshra and Prasenjit Mitra},
+      year={2024},
+      eprint={2404.08068},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
 }
 ```
 
