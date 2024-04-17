@@ -9,9 +9,9 @@ import numpy as np
 from scipy.spatial.distance import pdist
 
 class TrajDataset(Dataset):
-    def __init__(self, df, sample_size, seq_length, is_tokenize_special_chars = False, distance = .25):
+    def __init__(self, df, sample_size, seq_length, is_tokenize_special_chars = False, distance = .25, ablate_is_fixed_zoom = False, fixed_zoom_value = 2):
         self.tokenizer = LabelEncoder()
-        x, y, pos, sentences = self.load_data(df, sample_size, seq_length, is_tokenize_special_chars, distance)
+        x, y, pos, sentences = self.load_data(df, sample_size, seq_length, is_tokenize_special_chars, distance, ablate_is_fixed_zoom, fixed_zoom_value)
         self.x = torch.tensor(x, dtype=torch.long)
         self.y = torch.tensor(y, dtype=torch.long)
         self.pos = torch.tensor(pos, dtype=torch.long)
