@@ -1,5 +1,5 @@
 # WildGraph: Realistic Graph-based Trajectory Generation for Wildlife
-This repository contains the official implementation of [WildGraph: Realistic Graph-based Trajectory Generation for Wildlife]() submitted to KDD'24.
+This repository contains the official implementation of [WildGraph: Realistic Graph-based Trajectory Generation for Wildlife]().
 ## Train 
 ![Model](assets/wildgraph-train.svg)
 
