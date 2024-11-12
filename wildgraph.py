@@ -167,6 +167,7 @@ class WildGraph(L.LightningModule):
     
         # Generate New Trajectories. State at state -1
     def generate_traj(self, z_samples, z_init, num):
+        Y = 5
         trajs = []
         for i in range(num):
             #pdb.set_trace()
@@ -193,12 +194,11 @@ class WildGraph(L.LightningModule):
                 y = self.model['decoder'](x_encoded)
                 index = torch.argmax(y)
                 #pdb.set_trace()
-                topk = torch.topk(y, 10)
+                topk = torch.topk(y, Y)
                 xs = self.embed_model(topk.indices)
-                x = torch.matmul(topk.values, xs)
+                x = torch.matmul(F.softmax(topk.values, dim=0), xs)
                 
                 traj.append(int(index.cpu().numpy()))
-                x = self.embed_model([index])
                 z_array = z_samples[index]
 
             if (not skip):
