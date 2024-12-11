@@ -46,13 +46,12 @@ After training, a report will be saved in `wild_experiments_log/[EXP]` automatic
 If you found this repository useful, please consider citing our work:
 
 ```
-@misc{allawati2024wildgraph,
-      title={WildGraph: Realistic Graph-based Trajectory Generation for Wildlife}, 
-      author={Ali Al-Lawati and Elsayed Eshra and Prasenjit Mitra},
-      year={2024},
-      eprint={2404.08068},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{al2024wildgraph,
+  title={WildGraph: Realistic Long-Horizon Trajectory Generation with Limited Sample Size},
+  author={Al-Lawati, Ali and Eshra, Elsayed and Mitra, Prasenjit},
+  booktitle={Proceedings of the 32nd ACM International Conference on Advances in Geographic Information Systems},
+  pages={247--258},
+  year={2024}
 }
 ```
 
