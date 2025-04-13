@@ -33,7 +33,7 @@ python wild_run.py --dataset geese --exp WILDGRAPH --epochs 90 --split_distance 
 
 
 ```
-To train VAE:
+To train the VAE Benchmark:
 ```
 python wild_run.py --dataset geese --exp VAE --epochs 90 
 ```
