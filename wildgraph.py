@@ -4,7 +4,6 @@ from torch.utils.data import Dataset
 from torch_geometric.nn import Node2Vec
 
 import lightning as L
-
 import pdb
 import random
 from util import dist, heatmap
